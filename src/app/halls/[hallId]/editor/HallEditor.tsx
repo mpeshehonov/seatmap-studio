@@ -383,6 +383,19 @@ export function HallEditor({
                     Удалить
                   </button>
                 </div>
+                <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+                  Название
+                  <input
+                    className="rounded-2xl border border-zinc-200 px-4 py-3 outline-none focus:border-rose-500"
+                    value={element.label}
+                    onChange={(event) =>
+                      updateElement(element.id, {
+                        label: event.target.value,
+                      })
+                    }
+                    onFocus={() => setSelectedElementId(element.id)}
+                  />
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   <NumberField
                     label="X"

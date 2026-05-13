@@ -65,6 +65,7 @@ export type AppendShapeInput = {
 };
 
 export type UpdateSeatMapElementInput = {
+  label?: string;
   x?: number;
   y?: number;
   rotation?: number;
@@ -207,6 +208,7 @@ export function updateSeatMapElement(
 
       const transformedElement = {
         ...element,
+        label: input.label === undefined ? element.label : input.label,
         x: input.x === undefined ? element.x : clampInteger(input.x, -2400, 2400),
         y: input.y === undefined ? element.y : clampInteger(input.y, -1800, 1800),
         rotation:

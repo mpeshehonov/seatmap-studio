@@ -2,6 +2,7 @@
 
 import { type PointerEvent, useMemo, useState } from "react";
 
+import { RotateLeftIcon, RotateRightIcon } from "@/components/ui/icons";
 import {
   type SeatMapElement,
   type SeatMapJson,
@@ -263,24 +264,26 @@ function ElementRotationControls({
       onPointerDown={(event) => event.stopPropagation()}
     >
       <button
-        className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-800 hover:bg-zinc-200"
+        aria-label="Повернуть против часовой стрелки"
+        className="grid h-8 w-8 place-items-center rounded-full bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
         type="button"
         onClick={(event) => {
           event.stopPropagation();
           onRotate(elementId, -15);
         }}
       >
-        -15°
+        <RotateLeftIcon size={16} />
       </button>
       <button
-        className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-800 hover:bg-zinc-200"
+        aria-label="Повернуть по часовой стрелке"
+        className="grid h-8 w-8 place-items-center rounded-full bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
         type="button"
         onClick={(event) => {
           event.stopPropagation();
           onRotate(elementId, 15);
         }}
       >
-        +15°
+        <RotateRightIcon size={16} />
       </button>
     </div>
   );

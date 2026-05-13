@@ -127,4 +127,26 @@ describe("seat map helpers", () => {
       height: 64,
     });
   });
+
+  it("updates element labels without regenerating row seat ids", () => {
+    const original = buildDemoSeatMap();
+    const updated = updateSeatMapElement(original, "demo-row-a", {
+      label: "Партер центр",
+    });
+
+    expect(updated.elements[1]).toMatchObject({
+      id: "demo-row-a",
+      label: "Партер центр",
+    });
+    expect(listSeatIds(updated).slice(0, 4)).toEqual([
+      "demo-a-1",
+      "demo-a-2",
+      "demo-a-3",
+      "demo-a-4",
+    ]);
+    expect(original.elements[1]).toMatchObject({
+      id: "demo-row-a",
+      label: "A",
+    });
+  });
 });
