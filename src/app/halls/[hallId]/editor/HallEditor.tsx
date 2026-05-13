@@ -402,30 +402,6 @@ export function HallEditor({
                     }
                   />
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700"
-                    type="button"
-                    onClick={() =>
-                      updateElement(element.id, {
-                        rotation: element.rotation - 15,
-                      })
-                    }
-                  >
-                    -15°
-                  </button>
-                  <button
-                    className="rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700"
-                    type="button"
-                    onClick={() =>
-                      updateElement(element.id, {
-                        rotation: element.rotation + 15,
-                      })
-                    }
-                  >
-                    +15°
-                  </button>
-                </div>
                 {element.kind === "shape" ? (
                   <div className="grid grid-cols-2 gap-2">
                     <NumberField
@@ -450,7 +426,7 @@ export function HallEditor({
         </section>
       </aside>
 
-      <div className="min-w-0">
+      <div className="min-w-0 xl:sticky xl:top-6 xl:self-start">
         <SeatMapViewer
           map={map}
           readonly
@@ -459,6 +435,17 @@ export function HallEditor({
           onMoveElement={(elementId, position) =>
             updateElement(elementId, position)
           }
+          onRotateElement={(elementId, delta) => {
+            const element = map.elements.find((item) => item.id === elementId);
+
+            if (!element) {
+              return;
+            }
+
+            updateElement(elementId, {
+              rotation: element.rotation + delta,
+            });
+          }}
         />
         <details className="mt-4 rounded-3xl bg-white p-5 shadow-sm">
           <summary className="text-sm font-semibold text-zinc-700">

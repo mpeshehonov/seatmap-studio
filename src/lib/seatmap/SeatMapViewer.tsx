@@ -16,6 +16,7 @@ type SeatMapViewerProps = {
   selectedElementId?: string | null;
   onSelectElement?: (elementId: string) => void;
   onMoveElement?: (elementId: string, position: { x: number; y: number }) => void;
+  onRotateElement?: (elementId: string, delta: number) => void;
 };
 
 type DragState = {
@@ -41,6 +42,7 @@ export function SeatMapViewer({
   selectedElementId = null,
   onSelectElement,
   onMoveElement,
+  onRotateElement,
 }: SeatMapViewerProps) {
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -122,6 +124,7 @@ export function SeatMapViewer({
                     element={element}
                     isEditable={isEditingElements}
                     isSelected={selectedElementId === element.id}
+                    onRotate={onRotateElement}
                     onPointerDown={startElementDrag}
                     onPointerMove={moveElement}
                     onPointerUp={stopElementDrag}
@@ -176,6 +179,12 @@ export function SeatMapViewer({
                         );
                       })}
                     </div>
+                    {selectedElementId === element.id && onRotateElement ? (
+                      <ElementRotationControls
+                        elementId={element.id}
+                        onRotate={onRotateElement}
+                      />
+                    ) : null}
                   </div>
                 );
               default:
@@ -197,6 +206,7 @@ function Shape({
   element,
   isEditable,
   isSelected,
+  onRotate,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -204,6 +214,7 @@ function Shape({
   element: ShapeElement;
   isEditable: boolean;
   isSelected: boolean;
+  onRotate?: (elementId: string, delta: number) => void;
   onPointerDown: (
     element: ShapeElement,
     event: PointerEvent<HTMLDivElement>,
@@ -229,6 +240,48 @@ function Shape({
       onPointerCancel={onPointerUp}
     >
       {element.label}
+      {isSelected && onRotate ? (
+        <ElementRotationControls
+          elementId={element.id}
+          onRotate={onRotate}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ElementRotationControls({
+  elementId,
+  onRotate,
+}: {
+  elementId: string;
+  onRotate: (elementId: string, delta: number) => void;
+}) {
+  return (
+    <div
+      className="absolute -top-11 left-1/2 z-10 flex -translate-x-1/2 gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-lg"
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <button
+        className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-800 hover:bg-zinc-200"
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onRotate(elementId, -15);
+        }}
+      >
+        -15°
+      </button>
+      <button
+        className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-800 hover:bg-zinc-200"
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onRotate(elementId, 15);
+        }}
+      >
+        +15°
+      </button>
     </div>
   );
 }
