@@ -71,6 +71,7 @@ export async function createHallWithDemoMap(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/venues");
+  revalidatePath(`/venues/${venueId}`);
   redirect(`/halls/${hall.id}/editor`);
 }
 
@@ -79,10 +80,12 @@ export async function setHallPublished(formData: FormData) {
   const hallId = getRequiredString(formData, "hallId");
   const isPublished = formData.get("isPublished") === "true";
 
-  const { error } = await supabase
+  const { data: hall, error } = await supabase
     .from("halls")
     .update({ is_published: isPublished })
-    .eq("id", hallId);
+    .eq("id", hallId)
+    .select("venue_id")
+    .single();
 
   if (error) {
     throw new Error(error.message);
@@ -90,6 +93,9 @@ export async function setHallPublished(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/venues");
+  if (hall?.venue_id) {
+    revalidatePath(`/venues/${hall.venue_id}`);
+  }
   revalidatePath(`/halls/${hallId}/editor`);
   revalidatePath(`/embed/${hallId}`);
 }

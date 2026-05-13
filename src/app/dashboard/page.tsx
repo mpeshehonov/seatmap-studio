@@ -63,6 +63,14 @@ export default async function DashboardPage() {
                 <h2 className="mt-2 text-2xl font-bold text-zinc-950">
                   {venue.name}
                 </h2>
+                <div className="mt-4">
+                  <Link
+                    className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900"
+                    href={`/venues/${venue.id}`}
+                  >
+                    Открыть площадку
+                  </Link>
+                </div>
                 <div className="mt-5 flex flex-col gap-3">
                   {(venue.halls ?? []).map((hall) => (
                     <div

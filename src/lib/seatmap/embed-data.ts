@@ -37,7 +37,7 @@ export async function getEmbedHallPayload(
 
   const { data: hall, error: hallError } = await supabase
     .from("halls")
-    .select("id,name,venue_id,is_published")
+    .select("id,name,is_published")
     .eq("id", hallId)
     .eq("is_published", true)
     .maybeSingle();
@@ -46,19 +46,17 @@ export async function getEmbedHallPayload(
     return null;
   }
 
-  const [{ data: venue }, { data: seatMap }, { data: seatStatuses }] =
-    await Promise.all([
-      supabase.from("venues").select("name").eq("id", hall.venue_id).maybeSingle(),
-      supabase
-        .from("seat_maps")
-        .select("map_json")
-        .eq("hall_id", hall.id)
-        .maybeSingle(),
-      supabase
-        .from("seat_statuses")
-        .select("seat_id,status")
-        .eq("hall_id", hall.id),
-    ]);
+  const [{ data: seatMap }, { data: seatStatuses }] = await Promise.all([
+    supabase
+      .from("seat_maps")
+      .select("map_json")
+      .eq("hall_id", hall.id)
+      .maybeSingle(),
+    supabase
+      .from("seat_statuses")
+      .select("seat_id,status")
+      .eq("hall_id", hall.id),
+  ]);
 
   if (!seatMap?.map_json) {
     return null;
@@ -68,7 +66,7 @@ export async function getEmbedHallPayload(
     hall: {
       id: hall.id,
       name: hall.name,
-      venueName: venue?.name ?? null,
+      venueName: null,
     },
     map: seatMap.map_json as unknown as SeatMapJson,
     statuses: Object.fromEntries(

@@ -92,6 +92,12 @@ export default async function VenuesPage() {
                     <h2 className="mt-1 text-2xl font-bold text-zinc-950">
                       {venue.name}
                     </h2>
+                    <Link
+                      className="mt-3 inline-flex rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900"
+                      href={`/venues/${venue.id}`}
+                    >
+                      Открыть площадку
+                    </Link>
                   </div>
                   <form action={createHallWithDemoMap} className="flex gap-2">
                     <input name="venueId" type="hidden" value={venue.id} />

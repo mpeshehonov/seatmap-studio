@@ -133,28 +133,9 @@ create policy "Users can upsert own profile"
 on public.profiles for insert to authenticated
 with check (id = (select auth.uid()));
 
-create policy "Authenticated users can read accessible venues"
+create policy "Users can read own venues"
 on public.venues for select to authenticated
-using (
-  owner_id = (select auth.uid())
-  or exists (
-    select 1
-    from public.halls
-    where halls.venue_id = venues.id
-      and halls.is_published = true
-  )
-);
-
-create policy "Public can read venues with published halls"
-on public.venues for select to anon
-using (
-  exists (
-    select 1
-    from public.halls
-    where halls.venue_id = venues.id
-      and halls.is_published = true
-  )
-);
+using (owner_id = (select auth.uid()));
 
 create policy "Users can create own venues"
 on public.venues for insert to authenticated
