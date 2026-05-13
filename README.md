@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Seatmap Studio
+
+Прототип замены seats.io: админка для площадок и залов, простой редактор схемы и публичный embed-виджет выбора мест.
+
+## Stack
+
+- Next.js App Router
+- React + TypeScript
+- Tailwind CSS
+- Supabase Auth/Postgres/RLS
+- Vercel-ready API routes
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The project uses Supabase Auth, Postgres, and RLS.
 
-## Learn More
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in Supabase SQL Editor.
+3. Copy `.env.example` to `.env.local`.
+4. Fill:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Useful routes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `/dashboard` - admin shell
+- `/venues` - create venues and halls
+- `/halls/[hallId]/editor` - hall editor shell
+- `/embed/[hallId]` - public embed preview for published halls
+- `/api/embed/halls/[hallId]` - public JSON payload for published halls
+- `/embed/demo-hall` - built-in demo embed fallback
 
-## Deploy on Vercel
+## Development plan
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+See `docs/mvp-plan.md`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Vercel deploy
+
+See `docs/vercel-deploy.md`.
+
+## Checks
+
+```bash
+npm test
+npm run lint
+npm run build
+```
