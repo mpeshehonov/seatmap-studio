@@ -64,6 +64,14 @@ export type AppendShapeInput = {
   rotation?: number;
 };
 
+export type UpdateSeatMapElementInput = {
+  x?: number;
+  y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
+};
+
 const rowSpecs = [
   { label: "A", count: 12, y: 150 },
   { label: "B", count: 12, y: 188 },
@@ -185,13 +193,54 @@ export function removeSeatMapElement(
   };
 }
 
+export function updateSeatMapElement(
+  map: SeatMapJson,
+  elementId: string,
+  input: UpdateSeatMapElementInput,
+): SeatMapJson {
+  return {
+    ...map,
+    elements: map.elements.map((element) => {
+      if (element.id !== elementId) {
+        return element;
+      }
+
+      const transformedElement = {
+        ...element,
+        x: input.x === undefined ? element.x : clampInteger(input.x, -2400, 2400),
+        y: input.y === undefined ? element.y : clampInteger(input.y, -1800, 1800),
+        rotation:
+          input.rotation === undefined
+            ? element.rotation
+            : clampInteger(input.rotation, -360, 360),
+      };
+
+      if (transformedElement.kind !== "shape") {
+        return transformedElement;
+      }
+
+      return {
+        ...transformedElement,
+        width:
+          input.width === undefined
+            ? transformedElement.width
+            : clampInteger(input.width, 20, 1200),
+        height:
+          input.height === undefined
+            ? transformedElement.height
+            : clampInteger(input.height, 20, 800),
+      };
+    }),
+  };
+}
+
 export function updateSeatMapMetadata(
   map: SeatMapJson,
   metadata: { name: string; width: number; height: number },
 ): SeatMapJson {
   return {
     ...map,
-    name: metadata.name.trim() || map.name,
+    name: metadata.name,
     viewport: {
       width: clampInteger(metadata.width, 320, 2400),
       height: clampInteger(metadata.height, 240, 1800),

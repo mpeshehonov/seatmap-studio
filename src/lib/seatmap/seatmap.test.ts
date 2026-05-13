@@ -6,6 +6,8 @@ import {
   buildDemoSeatMap,
   listSeatIds,
   removeSeatMapElement,
+  updateSeatMapElement,
+  updateSeatMapMetadata,
 } from "./seatmap";
 
 describe("seat map helpers", () => {
@@ -80,5 +82,49 @@ describe("seat map helpers", () => {
     expect(original.elements.some((element) => element.id === "custom-stage")).toBe(false);
     expect(withShape.elements.some((element) => element.id === "custom-stage")).toBe(true);
     expect(withoutShape.elements.some((element) => element.id === "custom-stage")).toBe(false);
+  });
+
+  it("preserves draft map names with spaces and empty values while editing", () => {
+    const map = buildDemoSeatMap();
+
+    const renamed = updateSeatMapMetadata(map, {
+      name: "Концертный зал",
+      width: map.viewport.width,
+      height: map.viewport.height,
+    });
+    const cleared = updateSeatMapMetadata(renamed, {
+      name: "",
+      width: renamed.viewport.width,
+      height: renamed.viewport.height,
+    });
+
+    expect(renamed.name).toBe("Концертный зал");
+    expect(cleared.name).toBe("");
+  });
+
+  it("updates element position, rotation, and shape size without mutating the original map", () => {
+    const original = buildDemoSeatMap();
+    const updated = updateSeatMapElement(original, "demo-stage", {
+      x: 320,
+      y: 72,
+      rotation: 15,
+      width: 240,
+      height: 64,
+    });
+
+    expect(original.elements[0]).toMatchObject({
+      x: 280,
+      y: 48,
+      rotation: 0,
+      width: 200,
+      height: 56,
+    });
+    expect(updated.elements[0]).toMatchObject({
+      x: 320,
+      y: 72,
+      rotation: 15,
+      width: 240,
+      height: 64,
+    });
   });
 });

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type PointerEvent, useMemo, useState } from "react";
 
 import {
+  type SeatMapElement,
   type SeatMapJson,
   type SeatStatus,
   type ShapeElement,
@@ -12,6 +13,18 @@ type SeatMapViewerProps = {
   map: SeatMapJson;
   statuses?: Record<string, SeatStatus>;
   readonly?: boolean;
+  selectedElementId?: string | null;
+  onSelectElement?: (elementId: string) => void;
+  onMoveElement?: (elementId: string, position: { x: number; y: number }) => void;
+};
+
+type DragState = {
+  elementId: string;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startX: number;
+  startY: number;
 };
 
 const statusClasses: Record<SeatStatus, string> = {
@@ -25,12 +38,17 @@ export function SeatMapViewer({
   map,
   statuses = {},
   readonly = false,
+  selectedElementId = null,
+  onSelectElement,
+  onMoveElement,
 }: SeatMapViewerProps) {
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+  const [dragState, setDragState] = useState<DragState | null>(null);
   const selectedLabel = useMemo(
     () => selectedSeatIds.join(", ") || "нет выбранных мест",
     [selectedSeatIds],
   );
+  const isEditingElements = Boolean(onMoveElement);
 
   function toggleSeat(seatId: string, status: SeatStatus) {
     if (readonly || status === "sold" || status === "held") {
@@ -46,6 +64,48 @@ export function SeatMapViewer({
     });
   }
 
+  function startElementDrag(
+    element: SeatMapElement,
+    event: PointerEvent<HTMLDivElement>,
+  ) {
+    onSelectElement?.(element.id);
+
+    if (!onMoveElement) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragState({
+      elementId: element.id,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startX: element.x,
+      startY: element.y,
+    });
+  }
+
+  function moveElement(event: PointerEvent<HTMLDivElement>) {
+    if (!dragState || !onMoveElement || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    onMoveElement(dragState.elementId, {
+      x: Math.round(dragState.startX + event.clientX - dragState.startClientX),
+      y: Math.round(dragState.startY + event.clientY - dragState.startClientY),
+    });
+  }
+
+  function stopElementDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    setDragState(null);
+  }
+
   return (
     <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="overflow-auto rounded-2xl bg-zinc-50">
@@ -56,17 +116,37 @@ export function SeatMapViewer({
           {map.elements.map((element) => {
             switch (element.kind) {
               case "shape":
-                return <Shape key={element.id} element={element} />;
+                return (
+                  <Shape
+                    key={element.id}
+                    element={element}
+                    isEditable={isEditingElements}
+                    isSelected={selectedElementId === element.id}
+                    onPointerDown={startElementDrag}
+                    onPointerMove={moveElement}
+                    onPointerUp={stopElementDrag}
+                  />
+                );
               case "row":
                 return (
                   <div
                     key={element.id}
-                    className="absolute flex items-center gap-2"
+                    className={`absolute flex items-center gap-2 rounded-xl p-1 ${
+                      isEditingElements ? "cursor-grab touch-none active:cursor-grabbing" : ""
+                    } ${
+                      selectedElementId === element.id
+                        ? "ring-2 ring-rose-500 ring-offset-2"
+                        : ""
+                    }`}
                     style={{
                       left: element.x,
                       top: element.y,
                       transform: `rotate(${element.rotation}deg)`,
                     }}
+                    onPointerDown={(event) => startElementDrag(element, event)}
+                    onPointerMove={moveElement}
+                    onPointerUp={stopElementDrag}
+                    onPointerCancel={stopElementDrag}
                   >
                     <span className="w-6 text-right text-xs font-semibold text-zinc-500">
                       {element.label}
@@ -84,7 +164,9 @@ export function SeatMapViewer({
                           <button
                             key={seat.id}
                             type="button"
-                            disabled={status === "sold" || status === "held"}
+                            disabled={
+                              readonly || status === "sold" || status === "held"
+                            }
                             onClick={() => toggleSeat(seat.id, status)}
                             className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${statusClasses[status]}`}
                             title={`${element.label}${seat.label} - ${seat.price} RUB`}
@@ -111,10 +193,29 @@ export function SeatMapViewer({
   );
 }
 
-function Shape({ element }: { element: ShapeElement }) {
+function Shape({
+  element,
+  isEditable,
+  isSelected,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+}: {
+  element: ShapeElement;
+  isEditable: boolean;
+  isSelected: boolean;
+  onPointerDown: (
+    element: ShapeElement,
+    event: PointerEvent<HTMLDivElement>,
+  ) => void;
+  onPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
+}) {
   return (
     <div
-      className="absolute grid place-items-center rounded-2xl border border-zinc-300 bg-zinc-200 text-sm font-semibold text-zinc-700"
+      className={`absolute grid place-items-center rounded-2xl border border-zinc-300 bg-zinc-200 text-sm font-semibold text-zinc-700 ${
+        isEditable ? "cursor-grab touch-none active:cursor-grabbing" : ""
+      } ${isSelected ? "ring-2 ring-rose-500 ring-offset-2" : ""}`}
       style={{
         left: element.x,
         top: element.y,
@@ -122,6 +223,10 @@ function Shape({ element }: { element: ShapeElement }) {
         height: element.height,
         transform: `rotate(${element.rotation}deg)`,
       }}
+      onPointerDown={(event) => onPointerDown(element, event)}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
     >
       {element.label}
     </div>
