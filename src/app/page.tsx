@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ExternalLinkIcon, OpenIcon, WidgetIcon } from "@/components/ui/icons";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-100 px-6 py-10">
@@ -14,9 +16,10 @@ export default function Home() {
             </h1>
           </div>
           <Link
-            className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
+            className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
             href="/login"
           >
+            <OpenIcon />
             Войти
           </Link>
         </nav>
@@ -41,16 +44,21 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white"
               href="/dashboard"
             >
+              <OpenIcon />
               Открыть админку
             </Link>
             <Link
-              className="rounded-full border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
+              className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
               href="/embed/demo-hall"
+              rel="noreferrer"
+              target="_blank"
             >
-              Посмотреть embed
+              <WidgetIcon />
+              Посмотреть виджет
+              <ExternalLinkIcon />
             </Link>
           </div>
         </div>

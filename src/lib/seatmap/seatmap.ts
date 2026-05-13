@@ -42,6 +42,28 @@ export type ShapeElement = {
 
 export type SeatStatus = "available" | "selected" | "held" | "sold";
 
+export type AppendSeatRowInput = {
+  idPrefix: string;
+  label: string;
+  seatCount: number;
+  category: SeatDefinition["category"];
+  price: number;
+  x: number;
+  y: number;
+  seatSpacing: number;
+};
+
+export type AppendShapeInput = {
+  id: string;
+  label: string;
+  shape: ShapeElement["shape"];
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+};
+
 const rowSpecs = [
   { label: "A", count: 12, y: 150 },
   { label: "B", count: 12, y: 188 },
@@ -97,4 +119,97 @@ export function listSeatIds(map: SeatMapJson): string[] {
 
     return element.seats.map((seat) => seat.id);
   });
+}
+
+export function appendSeatRow(
+  map: SeatMapJson,
+  input: AppendSeatRowInput,
+): SeatMapJson {
+  const normalizedLabel = input.label.trim();
+  const rowSlug = slugify(normalizedLabel);
+  const seatCount = clampInteger(input.seatCount, 1, 80);
+
+  return {
+    ...map,
+    elements: [
+      ...map.elements,
+      {
+        id: `${input.idPrefix}-row-${rowSlug}`,
+        kind: "row",
+        label: normalizedLabel,
+        x: input.x,
+        y: input.y,
+        rotation: 0,
+        seatSpacing: input.seatSpacing,
+        seats: Array.from({ length: seatCount }, (_, index) => ({
+          id: `${input.idPrefix}-${rowSlug}-${index + 1}`,
+          label: String(index + 1),
+          category: input.category,
+          price: input.price,
+        })),
+      },
+    ],
+  };
+}
+
+export function appendShape(
+  map: SeatMapJson,
+  input: AppendShapeInput,
+): SeatMapJson {
+  return {
+    ...map,
+    elements: [
+      ...map.elements,
+      {
+        id: input.id,
+        kind: "shape",
+        shape: input.shape,
+        label: input.label.trim(),
+        x: input.x,
+        y: input.y,
+        width: input.width,
+        height: input.height,
+        rotation: input.rotation ?? 0,
+      },
+    ],
+  };
+}
+
+export function removeSeatMapElement(
+  map: SeatMapJson,
+  elementId: string,
+): SeatMapJson {
+  return {
+    ...map,
+    elements: map.elements.filter((element) => element.id !== elementId),
+  };
+}
+
+export function updateSeatMapMetadata(
+  map: SeatMapJson,
+  metadata: { name: string; width: number; height: number },
+): SeatMapJson {
+  return {
+    ...map,
+    name: metadata.name.trim() || map.name,
+    viewport: {
+      width: clampInteger(metadata.width, 320, 2400),
+      height: clampInteger(metadata.height, 240, 1800),
+    },
+  };
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё]+/gi, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function clampInteger(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+
+  return Math.min(Math.max(Math.round(value), min), max);
 }

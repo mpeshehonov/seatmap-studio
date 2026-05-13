@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { HallEditor } from "./HallEditor";
 import { setHallPublished } from "@/app/venues/actions";
-import { demoSeatStatuses } from "@/lib/seatmap/demo-data";
-import { SeatMapViewer } from "@/lib/seatmap/SeatMapViewer";
+import {
+  EyeIcon,
+  EyeOffIcon,
+  ExternalLinkIcon,
+  WidgetIcon,
+} from "@/components/ui/icons";
 import { buildDemoSeatMap, type SeatMapJson } from "@/lib/seatmap/seatmap";
 import { requireAuthenticatedUser } from "@/lib/supabase/auth";
 
@@ -62,53 +67,39 @@ export default async function EditorPage({ params }: EditorPageProps) {
                   value={String(!hall.is_published)}
                 />
                 <button
-                  className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
+                  className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
                   type="submit"
                 >
+                  {hall.is_published ? <EyeOffIcon /> : <EyeIcon />}
                   {hall.is_published ? "Снять с публикации" : "Опубликовать"}
                 </button>
               </form>
-              <Link
-                className="rounded-full border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
-                href={`/embed/${hallId}`}
-              >
-                Открыть embed
-              </Link>
+              {hall.is_published ? (
+                <Link
+                  className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
+                  href={`/embed/${hallId}`}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <WidgetIcon />
+                  Открыть виджет
+                  <ExternalLinkIcon />
+                </Link>
+              ) : (
+                <button
+                  className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-5 py-3 text-sm font-semibold text-zinc-400"
+                  disabled
+                  type="button"
+                >
+                  <WidgetIcon />
+                  Открыть виджет
+                </button>
+              )}
             </div>
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-zinc-950">Инструменты MVP</h2>
-            <div className="mt-4 flex flex-col gap-3">
-              {[
-                "Добавить прямой ряд",
-                "Добавить сцену",
-                "Изменить цену категории",
-                "Сохранить JSON",
-              ].map((label) => (
-                <button
-                  key={label}
-                  type="button"
-                  className="rounded-2xl border border-zinc-200 px-4 py-3 text-left text-sm font-semibold text-zinc-700"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="mt-5 text-xs leading-5 text-zinc-500">
-              Кнопки пока обозначают целевую UX-структуру. Следующий этап —
-              подключить реальные операции с `seat_maps.map_json`.
-            </p>
-          </aside>
-
-          <SeatMapViewer
-            map={map}
-            readonly
-            statuses={demoSeatStatuses}
-          />
-        </div>
+        <HallEditor hallId={hallId} initialMap={map} />
       </section>
     </main>
   );

@@ -5,6 +5,14 @@ import {
   createHallWithDemoMap,
   setHallPublished,
 } from "@/app/venues/actions";
+import {
+  AddIcon,
+  EditIcon,
+  EyeIcon,
+  EyeOffIcon,
+  ExternalLinkIcon,
+  WidgetIcon,
+} from "@/components/ui/icons";
 import { requireAuthenticatedUser } from "@/lib/supabase/auth";
 
 type VenuePageProps = {
@@ -73,9 +81,10 @@ export default async function VenuePage({ params }: VenuePageProps) {
                 placeholder="Название зала"
               />
               <button
-                className="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
+                className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
                 type="submit"
               >
+                <AddIcon />
                 Добавить зал
               </button>
             </form>
@@ -104,26 +113,43 @@ export default async function VenuePage({ params }: VenuePageProps) {
                       value={String(!hall.is_published)}
                     />
                     <button
-                      className="rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700"
+                      className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700"
                       type="submit"
                     >
+                      {hall.is_published ? <EyeOffIcon /> : <EyeIcon />}
                       {hall.is_published ? "Снять" : "Опубликовать"}
                     </button>
                   </form>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Link
-                    className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
+                    className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
                     href={`/halls/${hall.id}/editor`}
                   >
+                    <EditIcon />
                     Редактор
                   </Link>
-                  <Link
-                    className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900"
-                    href={`/embed/${hall.id}`}
-                  >
-                    Embed
-                  </Link>
+                  {hall.is_published ? (
+                    <Link
+                      className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900"
+                      href={`/embed/${hall.id}`}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <WidgetIcon />
+                      Виджет
+                      <ExternalLinkIcon />
+                    </Link>
+                  ) : (
+                    <button
+                      className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-400"
+                      disabled
+                      type="button"
+                    >
+                      <WidgetIcon />
+                      Виджет
+                    </button>
+                  )}
                   <code className="rounded-full bg-zinc-100 px-4 py-2 text-xs text-zinc-700">
                     /embed/{hall.id}
                   </code>
