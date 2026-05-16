@@ -20,7 +20,6 @@ import {
   appendShape,
   listSeatIds,
   removeSeatMapElement,
-  type SeatDefinition,
   type SeatMapJson,
   type ShapeElement,
   updateSeatMapMetadata,
@@ -34,12 +33,6 @@ type HallEditorProps = {
   initialMap: SeatMapJson;
 };
 
-const categories: SeatDefinition["category"][] = [
-  "standard",
-  "vip",
-  "accessible",
-];
-
 export function HallEditor({
   hallId,
   hallName,
@@ -52,9 +45,6 @@ export function HallEditor({
   );
   const [rowLabel, setRowLabel] = useState(nextRowLabel(initialMap));
   const [seatCount, setSeatCount] = useState(12);
-  const [rowPrice, setRowPrice] = useState(1500);
-  const [rowCategory, setRowCategory] =
-    useState<SeatDefinition["category"]>("standard");
   const [shapeLabel, setShapeLabel] = useState("Stage");
   const [shapeType, setShapeType] = useState<ShapeElement["shape"]>("stage");
   const [message, setMessage] = useState<SaveSeatMapResult | null>(null);
@@ -68,8 +58,6 @@ export function HallEditor({
       idPrefix: hallId,
       label: rowLabel,
       seatCount,
-      category: rowCategory,
-      price: rowPrice,
       x: 160,
       y: rowY,
       seatSpacing: 28,
@@ -260,41 +248,18 @@ export function HallEditor({
                 onChange={(event) => setRowLabel(event.target.value)}
               />
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <NumberField
-                label="Мест"
-                value={seatCount}
-                onChange={setSeatCount}
-              />
-              <NumberField
-                label="Цена"
-                value={rowPrice}
-                onChange={setRowPrice}
-              />
-            </div>
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Категория
-              <select
-                className="rounded-2xl border border-zinc-200 px-4 py-3 outline-none focus:border-rose-500"
-                value={rowCategory}
-                onChange={(event) =>
-                  setRowCategory(event.target.value as SeatDefinition["category"])
-                }
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <NumberField
+              label="Мест"
+              value={seatCount}
+              onChange={setSeatCount}
+            />
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white"
               type="button"
               onClick={addRow}
             >
               <AddIcon />
-              Добавить прямой ряд
+              Добавить ряд
             </button>
           </div>
         </section>

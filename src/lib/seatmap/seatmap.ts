@@ -46,8 +46,8 @@ export type AppendSeatRowInput = {
   idPrefix: string;
   label: string;
   seatCount: number;
-  category: SeatDefinition["category"];
-  price: number;
+  category?: SeatDefinition["category"];
+  price?: number;
   x: number;
   y: number;
   seatSpacing: number;
@@ -137,6 +137,8 @@ export function appendSeatRow(
   const normalizedLabel = input.label.trim();
   const rowSlug = slugify(normalizedLabel);
   const seatCount = clampInteger(input.seatCount, 1, 80);
+  const category = input.category ?? "standard";
+  const price = input.price ?? 0;
 
   return {
     ...map,
@@ -153,8 +155,8 @@ export function appendSeatRow(
         seats: Array.from({ length: seatCount }, (_, index) => ({
           id: `${input.idPrefix}-${rowSlug}-${index + 1}`,
           label: String(index + 1),
-          category: input.category,
-          price: input.price,
+          category,
+          price,
         })),
       },
     ],

@@ -173,7 +173,7 @@ export function SeatMapViewer({
                             }
                             onClick={() => toggleSeat(seat.id, status)}
                             className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${statusClasses[status]}`}
-                            title={`${element.label}${seat.label} - ${seat.price} RUB`}
+                            title={`${element.label}${seat.label}`}
                           >
                             {seat.label}
                           </button>

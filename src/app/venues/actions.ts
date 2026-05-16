@@ -41,7 +41,11 @@ export async function createVenue(formData: FormData) {
 
 export async function createHallWithDemoMap(formData: FormData) {
   const { supabase, user } = await requireAuthenticatedUser();
-  const venueId = getRequiredString(formData, "venueId");
+  const submittedVenueId = formData.get("venueId");
+  const venueId =
+    typeof submittedVenueId === "string" && submittedVenueId.trim().length > 0
+      ? submittedVenueId.trim()
+      : await getOrCreateWorkspaceVenueId(user.id);
   const name = getRequiredString(formData, "name");
 
   const { data: hall, error: hallError } = await supabase
@@ -73,6 +77,41 @@ export async function createHallWithDemoMap(formData: FormData) {
   revalidatePath("/venues");
   revalidatePath(`/venues/${venueId}`);
   redirect(`/halls/${hall.id}/editor`);
+}
+
+async function getOrCreateWorkspaceVenueId(ownerId: string): Promise<string> {
+  const supabase = (await requireAuthenticatedUser()).supabase;
+  const { data: existingVenue, error: existingVenueError } = await supabase
+    .from("venues")
+    .select("id")
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingVenueError) {
+    throw new Error(existingVenueError.message);
+  }
+
+  if (existingVenue?.id) {
+    return existingVenue.id;
+  }
+
+  const { data: venue, error } = await supabase
+    .from("venues")
+    .insert({
+      owner_id: ownerId,
+      name: "Рабочая область схем",
+      address: null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return venue.id;
 }
 
 export async function setHallPublished(formData: FormData) {

@@ -30,7 +30,7 @@ describe("seat map helpers", () => {
     ]);
   });
 
-  it("adds a straight row with stable seat ids and pricing metadata", () => {
+  it("adds a straight row with stable seat ids and neutral seat metadata", () => {
     const map = appendSeatRow(
       {
         version: 1,
@@ -42,8 +42,6 @@ describe("seat map helpers", () => {
         idPrefix: "hall",
         label: "A",
         seatCount: 4,
-        category: "standard",
-        price: 1200,
         x: 100,
         y: 150,
         seatSpacing: 28,
@@ -63,6 +61,10 @@ describe("seat map helpers", () => {
       label: "A",
       x: 100,
       y: 150,
+    });
+    expect(map.elements[0]?.kind === "row" ? map.elements[0].seats[0] : null).toMatchObject({
+      category: "standard",
+      price: 0,
     });
   });
 

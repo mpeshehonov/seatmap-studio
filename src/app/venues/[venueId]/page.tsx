@@ -54,21 +54,21 @@ export default async function VenuePage({ params }: VenuePageProps) {
             ← В дашборд
           </Link>
           <Link className="text-sm text-zinc-600" href="/venues">
-            Все площадки
+            Все схемы
           </Link>
         </div>
 
-        <div className="mt-6 rounded-[2rem] bg-white p-8 shadow-sm">
+        <div className="mt-6 rounded-4xl bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-600">
-                Площадка
+                Рабочая область
               </p>
               <h1 className="mt-2 text-4xl font-bold text-zinc-950">
-                {venue.name}
+                Варианты схем
               </h1>
               <p className="mt-2 text-sm text-zinc-500">
-                {venue.address ?? "Адрес не указан"}
+                {venue.name}
               </p>
             </div>
 
@@ -78,14 +78,14 @@ export default async function VenuePage({ params }: VenuePageProps) {
                 required
                 className="rounded-2xl border border-zinc-200 px-4 py-2 text-sm outline-none focus:border-rose-500"
                 name="name"
-                placeholder="Название зала"
+                placeholder="Название варианта"
               />
               <button
                 className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
                 type="submit"
               >
                 <AddIcon />
-                Добавить зал
+                Добавить схему
               </button>
             </form>
           </div>
@@ -160,7 +160,7 @@ export default async function VenuePage({ params }: VenuePageProps) {
 
           {(venue.halls ?? []).length === 0 ? (
             <div className="mt-8 rounded-3xl bg-zinc-50 p-6 text-sm text-zinc-600">
-              В этой площадке пока нет залов. Добавьте первый зал через форму
+              Вариантов схем пока нет. Добавьте первую схему через форму
               выше.
             </div>
           ) : null}
