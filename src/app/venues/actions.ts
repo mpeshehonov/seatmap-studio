@@ -79,6 +79,42 @@ export async function createHallWithDemoMap(formData: FormData) {
   redirect(`/halls/${hall.id}/editor`);
 }
 
+export async function createEventForHall(formData: FormData) {
+  const { supabase, user } = await requireAuthenticatedUser();
+  const hallId = getRequiredString(formData, "hallId");
+  const title = getRequiredString(formData, "title");
+  const startsAt = parseOptionalDateTime(formData.get("startsAt"));
+
+  const { error } = await supabase.from("events").insert({
+    owner_id: user.id,
+    hall_id: hallId,
+    title,
+    starts_at: startsAt,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/venues");
+  revalidatePath(`/halls/${hallId}/editor`);
+}
+
+function parseOptionalDateTime(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid event date");
+  }
+
+  return date.toISOString();
+}
+
 async function getOrCreateWorkspaceVenueId(ownerId: string): Promise<string> {
   const supabase = (await requireAuthenticatedUser()).supabase;
   const { data: existingVenue, error: existingVenueError } = await supabase
