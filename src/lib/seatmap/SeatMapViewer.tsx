@@ -4,6 +4,10 @@ import { type PointerEvent, useMemo, useState } from "react";
 
 import { RotateLeftIcon, RotateRightIcon } from "@/components/ui/icons";
 import {
+  getEventSeatCategoryLabel,
+  type EventSeatCategory,
+} from "./event-seat-categories";
+import {
   type SeatMapElement,
   type SeatMapJson,
   type SeatStatus,
@@ -13,8 +17,11 @@ import {
 type SeatMapViewerProps = {
   map: SeatMapJson;
   statuses?: Record<string, SeatStatus>;
+  seatCategories?: Record<string, EventSeatCategory>;
+  selectedSeatIds?: string[];
   readonly?: boolean;
   selectedElementId?: string | null;
+  onSelectedSeatIdsChange?: (seatIds: string[]) => void;
   onSelectElement?: (elementId: string) => void;
   onMoveElement?: (elementId: string, position: { x: number; y: number }) => void;
   onRotateElement?: (elementId: string, delta: number) => void;
@@ -36,20 +43,33 @@ const statusClasses: Record<SeatStatus, string> = {
   sold: "border-zinc-400 bg-zinc-300 text-zinc-500",
 };
 
+const categoryClasses: Record<EventSeatCategory, string> = {
+  standard: "border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-200",
+  vip: "border-amber-400 bg-amber-200 text-amber-950 hover:bg-amber-300",
+  accessible:
+    "border-emerald-400 bg-emerald-100 text-emerald-950 hover:bg-emerald-200",
+};
+
 export function SeatMapViewer({
   map,
   statuses = {},
+  seatCategories = {},
+  selectedSeatIds,
   readonly = false,
   selectedElementId = null,
+  onSelectedSeatIdsChange,
   onSelectElement,
   onMoveElement,
   onRotateElement,
 }: SeatMapViewerProps) {
-  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+  const [internalSelectedSeatIds, setInternalSelectedSeatIds] = useState<string[]>(
+    [],
+  );
+  const activeSelectedSeatIds = selectedSeatIds ?? internalSelectedSeatIds;
   const [dragState, setDragState] = useState<DragState | null>(null);
   const selectedLabel = useMemo(
-    () => selectedSeatIds.join(", ") || "нет выбранных мест",
-    [selectedSeatIds],
+    () => activeSelectedSeatIds.join(", ") || "нет выбранных мест",
+    [activeSelectedSeatIds],
   );
   const isEditingElements = Boolean(onMoveElement);
 
@@ -58,12 +78,17 @@ export function SeatMapViewer({
       return;
     }
 
-    setSelectedSeatIds((current) => {
-      if (current.includes(seatId)) {
-        return current.filter((id) => id !== seatId);
-      }
+    const nextSelectedSeatIds = activeSelectedSeatIds.includes(seatId)
+      ? activeSelectedSeatIds.filter((id) => id !== seatId)
+      : [...activeSelectedSeatIds, seatId];
 
-      return [...current, seatId];
+    if (onSelectedSeatIdsChange) {
+      onSelectedSeatIdsChange(nextSelectedSeatIds);
+      return;
+    }
+
+    setInternalSelectedSeatIds(() => {
+      return nextSelectedSeatIds;
     });
   }
 
@@ -160,9 +185,10 @@ export function SeatMapViewer({
                       style={{ gap: Math.max(element.seatSpacing - 20, 6) }}
                     >
                       {element.seats.map((seat) => {
-                        const status = selectedSeatIds.includes(seat.id)
+                        const status = activeSelectedSeatIds.includes(seat.id)
                           ? "selected"
                           : statuses[seat.id] ?? "available";
+                        const category = seatCategories[seat.id];
 
                         return (
                           <button
@@ -172,8 +198,8 @@ export function SeatMapViewer({
                               readonly || status === "sold" || status === "held"
                             }
                             onClick={() => toggleSeat(seat.id, status)}
-                            className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${statusClasses[status]}`}
-                            title={`${element.label}${seat.label}`}
+                            className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${getSeatClassName(status, category)}`}
+                            title={getSeatTitle(element.label, seat.label, category)}
                           >
                             {seat.label}
                           </button>
@@ -201,6 +227,31 @@ export function SeatMapViewer({
       ) : null}
     </div>
   );
+}
+
+function getSeatClassName(
+  status: SeatStatus,
+  category: EventSeatCategory | undefined,
+): string {
+  if (status !== "available" || !category) {
+    return statusClasses[status];
+  }
+
+  return categoryClasses[category];
+}
+
+function getSeatTitle(
+  rowLabel: string,
+  seatLabel: string,
+  category: EventSeatCategory | undefined,
+): string {
+  const seatTitle = `${rowLabel}${seatLabel}`;
+
+  if (!category) {
+    return seatTitle;
+  }
+
+  return `${seatTitle} · ${getEventSeatCategoryLabel(category)}`;
 }
 
 function Shape({

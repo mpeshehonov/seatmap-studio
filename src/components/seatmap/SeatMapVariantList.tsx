@@ -154,9 +154,12 @@ export function SeatMapVariantList({
                         key={event.id}
                         className="rounded-2xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700"
                       >
-                        <span className="font-semibold text-zinc-950">
+                        <Link
+                          className="font-semibold text-zinc-950 underline-offset-4 hover:text-rose-600 hover:underline"
+                          href={`/events/${event.id}`}
+                        >
                           {event.title}
-                        </span>
+                        </Link>
                         {event.starts_at ? (
                           <span className="ml-2 text-xs text-zinc-500">
                             {formatEventDate(event.starts_at)}
@@ -199,9 +202,12 @@ export function SeatMapVariantList({
                 key={event.id}
                 className="rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700"
               >
-                <span className="font-semibold text-zinc-950">
+                <Link
+                  className="font-semibold text-zinc-950 underline-offset-4 hover:text-rose-600 hover:underline"
+                  href={`/events/${event.id}`}
+                >
                   {event.title}
-                </span>
+                </Link>
                 {event.starts_at ? (
                   <span className="ml-2 text-xs text-zinc-500">
                     {formatEventDate(event.starts_at)}

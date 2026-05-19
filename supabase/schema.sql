@@ -57,6 +57,18 @@ create table public.seat_statuses (
   unique nulls not distinct (event_id, hall_id, seat_id)
 );
 
+create table public.event_seat_categories (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.events(id) on delete cascade,
+  hall_id uuid not null references public.halls(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  seat_id text not null,
+  category text not null check (category in ('standard', 'vip', 'accessible')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (event_id, seat_id)
+);
+
 create index venues_owner_id_idx on public.venues(owner_id);
 create index halls_owner_id_idx on public.halls(owner_id);
 create index halls_venue_id_idx on public.halls(venue_id);
@@ -66,6 +78,9 @@ create index events_owner_id_idx on public.events(owner_id);
 create index seat_statuses_hall_id_idx on public.seat_statuses(hall_id);
 create index seat_statuses_event_id_idx on public.seat_statuses(event_id);
 create index seat_statuses_owner_id_idx on public.seat_statuses(owner_id);
+create index event_seat_categories_event_id_idx on public.event_seat_categories(event_id);
+create index event_seat_categories_hall_id_idx on public.event_seat_categories(hall_id);
+create index event_seat_categories_owner_id_idx on public.event_seat_categories(owner_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -98,6 +113,10 @@ create trigger seat_statuses_set_updated_at
 before update on public.seat_statuses
 for each row execute function public.set_updated_at();
 
+create trigger event_seat_categories_set_updated_at
+before update on public.event_seat_categories
+for each row execute function public.set_updated_at();
+
 create or replace function private.handle_new_user()
 returns trigger
 language plpgsql
@@ -124,6 +143,7 @@ alter table public.halls enable row level security;
 alter table public.seat_maps enable row level security;
 alter table public.events enable row level security;
 alter table public.seat_statuses enable row level security;
+alter table public.event_seat_categories enable row level security;
 
 create policy "Users can read own profile"
 on public.profiles for select to authenticated
@@ -325,4 +345,51 @@ with check (
 
 create policy "Users can delete own seat statuses"
 on public.seat_statuses for delete to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "Users can read own event seat categories"
+on public.event_seat_categories for select to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "Users can create own event seat categories"
+on public.event_seat_categories for insert to authenticated
+with check (
+  owner_id = (select auth.uid())
+  and exists (
+    select 1
+    from public.events
+    where events.id = event_seat_categories.event_id
+      and events.owner_id = (select auth.uid())
+      and events.hall_id = event_seat_categories.hall_id
+  )
+  and exists (
+    select 1
+    from public.halls
+    where halls.id = event_seat_categories.hall_id
+      and halls.owner_id = (select auth.uid())
+  )
+);
+
+create policy "Users can update own event seat categories"
+on public.event_seat_categories for update to authenticated
+using (owner_id = (select auth.uid()))
+with check (
+  owner_id = (select auth.uid())
+  and exists (
+    select 1
+    from public.events
+    where events.id = event_seat_categories.event_id
+      and events.owner_id = (select auth.uid())
+      and events.hall_id = event_seat_categories.hall_id
+  )
+  and exists (
+    select 1
+    from public.halls
+    where halls.id = event_seat_categories.hall_id
+      and halls.owner_id = (select auth.uid())
+  )
+);
+
+create policy "Users can delete own event seat categories"
+on public.event_seat_categories for delete to authenticated
 using (owner_id = (select auth.uid()));

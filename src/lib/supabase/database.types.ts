@@ -12,6 +12,54 @@ export type Database = {
   };
   public: {
     Tables: {
+      event_seat_categories: {
+        Row: {
+          category: string;
+          created_at: string;
+          event_id: string;
+          hall_id: string;
+          id: string;
+          owner_id: string;
+          seat_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          event_id: string;
+          hall_id: string;
+          id?: string;
+          owner_id: string;
+          seat_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          event_id?: string;
+          hall_id?: string;
+          id?: string;
+          owner_id?: string;
+          seat_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_seat_categories_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_seat_categories_hall_id_fkey";
+            columns: ["hall_id"];
+            isOneToOne: false;
+            referencedRelation: "halls";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       events: {
         Row: {
           created_at: string;
