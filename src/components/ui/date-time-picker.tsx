@@ -11,11 +11,13 @@ import { Popover } from "./popover";
 type DateTimePickerProps = {
   name: string;
   defaultTime?: string;
+  disabled?: boolean;
 };
 
 export function DateTimePicker({
   name,
   defaultTime = "19:00",
+  disabled = false,
 }: DateTimePickerProps) {
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState(defaultTime);
@@ -34,7 +36,8 @@ export function DateTimePicker({
         <Popover
           trigger={
             <button
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-sm text-zinc-800 outline-none hover:border-rose-300"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-sm text-zinc-800 outline-none hover:border-rose-300 disabled:bg-zinc-100 disabled:opacity-60"
+              disabled={disabled}
               type="button"
             >
               <CalendarIcon size={16} />
@@ -54,6 +57,7 @@ export function DateTimePicker({
         </Popover>
         <input
           className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-500"
+          disabled={disabled}
           type="time"
           value={time}
           onChange={(event) => setTime(event.target.value)}

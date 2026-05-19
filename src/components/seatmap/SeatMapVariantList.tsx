@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  type FormEvent,
+  type ReactNode,
+  useTransition,
+} from "react";
+import { toast } from "react-toastify";
 
 import {
   createEventForHall,
-  createHallWithDemoMap,
+  createHallWithDemoMapForClient,
   deleteEvent,
   detachEventFromHall,
   moveEventToHall,
@@ -73,21 +80,37 @@ export function SeatMapVariantList({
                   {variant.isPublished ? "Опубликована" : "Черновик"}
                 </p>
               </div>
-              <form action={setHallPublished}>
-                <input name="hallId" type="hidden" value={variant.id} />
-                <input
-                  name="isPublished"
-                  type="hidden"
-                  value={String(!variant.isPublished)}
-                />
-                <button
-                  className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700"
-                  type="submit"
-                >
-                  {variant.isPublished ? <EyeOffIcon /> : <EyeIcon />}
-                  {variant.isPublished ? "Снять" : "Опубликовать"}
-                </button>
-              </form>
+              <ActionForm
+                action={setHallPublished}
+                successMessage={
+                  variant.isPublished
+                    ? "Схема снята с публикации."
+                    : "Схема опубликована."
+                }
+              >
+                {(pending) => (
+                  <>
+                    <input name="hallId" type="hidden" value={variant.id} />
+                    <input
+                      name="isPublished"
+                      type="hidden"
+                      value={String(!variant.isPublished)}
+                    />
+                    <button
+                      className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-700 disabled:opacity-60"
+                      disabled={pending}
+                      type="submit"
+                    >
+                      {variant.isPublished ? <EyeOffIcon /> : <EyeIcon />}
+                      {pending
+                        ? "Сохраняем..."
+                        : variant.isPublished
+                          ? "Снять"
+                          : "Опубликовать"}
+                    </button>
+                  </>
+                )}
+              </ActionForm>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -121,7 +144,7 @@ export function SeatMapVariantList({
               )}
             </div>
 
-                    <div className="mt-5 grid gap-3 border-t border-zinc-100 pt-4 xl:grid-cols-[1fr_auto]">
+            <div className="mt-5 border-t border-zinc-100 pt-4">
               <div>
                 <h3 className="text-sm font-bold text-zinc-900">События</h3>
                 {variant.events.length > 0 ? (
@@ -139,11 +162,11 @@ export function SeatMapVariantList({
                             {formatEventDate(event.starts_at)}
                           </span>
                         ) : null}
-                                <EventActions
-                                  event={event}
-                                  variants={variants}
-                                  currentHallId={variant.id}
-                                />
+                        <EventActions
+                          event={event}
+                          variants={variants}
+                          currentHallId={variant.id}
+                        />
                       </li>
                     ))}
                   </ul>
@@ -154,7 +177,9 @@ export function SeatMapVariantList({
                 )}
               </div>
 
-                      <CreateEventDialog hallId={variant.id} />
+              <div className="mt-4">
+                <CreateEventDialog hallId={variant.id} />
+              </div>
             </div>
           </div>
         </article>
@@ -193,6 +218,8 @@ export function SeatMapVariantList({
 }
 
 function CreateVariantDialog() {
+  const router = useRouter();
+
   return (
     <Dialog
       title="Новая схема зала"
@@ -204,24 +231,38 @@ function CreateVariantDialog() {
         </button>
       }
     >
-      <form action={createHallWithDemoMap} className="grid gap-4">
-        <label className="grid gap-2 text-sm font-semibold text-zinc-800">
-          Название схемы
-          <input
-            required
-            className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-normal outline-none focus:border-rose-500"
-            name="name"
-            placeholder="Например, Концертный зал"
-          />
-        </label>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
-          type="submit"
-        >
-          <AddIcon />
-          Создать и открыть редактор
-        </button>
-      </form>
+      <ActionForm
+        action={createHallWithDemoMapForClient}
+        successMessage="Схема создана."
+        onSuccess={(result) => {
+          if (isCreateHallResult(result)) {
+            router.push(result.editorPath);
+          }
+        }}
+      >
+        {(pending) => (
+          <>
+            <label className="grid gap-2 text-sm font-semibold text-zinc-800">
+              Название схемы
+              <input
+                required
+                className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-normal outline-none focus:border-rose-500 disabled:bg-zinc-100"
+                disabled={pending}
+                name="name"
+                placeholder="Например, Концертный зал"
+              />
+            </label>
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              disabled={pending}
+              type="submit"
+            >
+              <AddIcon />
+              {pending ? "Создаём..." : "Создать и открыть редактор"}
+            </button>
+          </>
+        )}
+      </ActionForm>
     </Dialog>
   );
 }
@@ -232,35 +273,45 @@ function CreateEventDialog({ hallId }: { hallId: string }) {
       title="Новое событие"
       description="Событие сразу привяжется к выбранной схеме. Дату можно оставить пустой и заполнить позже."
       trigger={
-        <button className="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white">
+        <button className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-rose-600 underline-offset-4 hover:underline">
           <AddIcon />
           Создать событие
         </button>
       }
     >
-      <form action={createEventForHall} className="grid gap-4">
-        <input name="hallId" type="hidden" value={hallId} />
-        <label className="grid gap-2 text-sm font-semibold text-zinc-800">
-          Название события
-          <input
-            required
-            className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-normal outline-none focus:border-rose-500"
-            name="title"
-            placeholder="Например, Большой концерт"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-zinc-800">
-          Дата и время
-          <DateTimePicker name="startsAt" />
-        </label>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
-          type="submit"
-        >
-          <AddIcon />
-          Создать событие
-        </button>
-      </form>
+      <ActionForm
+        action={createEventForHall}
+        resetOnSuccess
+        successMessage="Событие создано."
+      >
+        {(pending) => (
+          <>
+            <input name="hallId" type="hidden" value={hallId} />
+            <label className="grid gap-2 text-sm font-semibold text-zinc-800">
+              Название события
+              <input
+                required
+                className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-normal outline-none focus:border-rose-500 disabled:bg-zinc-100"
+                disabled={pending}
+                name="title"
+                placeholder="Например, Большой концерт"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-zinc-800">
+              Дата и время
+              <DateTimePicker disabled={pending} name="startsAt" />
+            </label>
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              disabled={pending}
+              type="submit"
+            >
+              <AddIcon />
+              {pending ? "Создаём..." : "Создать событие"}
+            </button>
+          </>
+        )}
+      </ActionForm>
     </Dialog>
   );
 }
@@ -281,59 +332,165 @@ function EventActions({
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {currentHallId ? (
-        <form action={detachEventFromHall}>
-          <input name="eventId" type="hidden" value={event.id} />
-          <input name="hallId" type="hidden" value={currentHallId} />
-          <button
-            className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700"
-            type="submit"
-          >
-            <UnlinkIcon size={14} />
-            Отвязать
-          </button>
-        </form>
+        <ActionForm
+          action={detachEventFromHall}
+          successMessage="Событие отвязано от схемы."
+        >
+          {(pending) => (
+            <>
+              <input name="eventId" type="hidden" value={event.id} />
+              <input name="hallId" type="hidden" value={currentHallId} />
+              <button
+                className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 disabled:opacity-60"
+                disabled={pending}
+                type="submit"
+              >
+                <UnlinkIcon size={14} />
+                {pending ? "Отвязываем..." : "Отвязать"}
+              </button>
+            </>
+          )}
+        </ActionForm>
       ) : null}
       {attachableVariants.length > 0 ? (
-        <form action={moveEventToHall} className="flex flex-wrap gap-2">
-          <input name="eventId" type="hidden" value={event.id} />
-          {currentHallId ? (
-            <input name="sourceHallId" type="hidden" value={currentHallId} />
-          ) : null}
-          <select
-            required
-            className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-500"
-            name="hallId"
-            defaultValue=""
-          >
-            <option disabled value="">
-              {currentHallId ? "Перенести в..." : "Привязать к..."}
-            </option>
-            {attachableVariants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.name}
-              </option>
-            ))}
-          </select>
-          <button
-            className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700"
-            type="submit"
-          >
-            <LinkIcon size={14} />
-            Сохранить
-          </button>
-        </form>
-      ) : null}
-      <form action={deleteEvent}>
-        <input name="eventId" type="hidden" value={event.id} />
-        <button
-          className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700"
-          type="submit"
+        <ActionForm
+          action={moveEventToHall}
+          className="flex flex-wrap gap-2"
+          successMessage={
+            currentHallId
+              ? "Событие перенесено в другую схему."
+              : "Событие привязано к схеме."
+          }
         >
-          <TrashIcon size={14} />
-          Удалить
-        </button>
-      </form>
+          {(pending) => (
+            <>
+              <input name="eventId" type="hidden" value={event.id} />
+              {currentHallId ? (
+                <input
+                  name="sourceHallId"
+                  type="hidden"
+                  value={currentHallId}
+                />
+              ) : null}
+              <select
+                required
+                className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-500 disabled:bg-zinc-100"
+                defaultValue=""
+                disabled={pending}
+                name="hallId"
+              >
+                <option disabled value="">
+                  {currentHallId ? "Перенести в..." : "Привязать к..."}
+                </option>
+                {attachableVariants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 disabled:opacity-60"
+                disabled={pending}
+                type="submit"
+              >
+                <LinkIcon size={14} />
+                {pending ? "Сохраняем..." : "Сохранить"}
+              </button>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
+      <ActionForm action={deleteEvent} successMessage="Событие удалено.">
+        {(pending) => (
+          <>
+            <input name="eventId" type="hidden" value={event.id} />
+            <button
+              className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-60"
+              disabled={pending}
+              type="submit"
+            >
+              <TrashIcon size={14} />
+              {pending ? "Удаляем..." : "Удалить"}
+            </button>
+          </>
+        )}
+      </ActionForm>
     </div>
+  );
+}
+
+type ActionResult = unknown;
+
+type ActionFormProps = {
+  action: (formData: FormData) => Promise<ActionResult>;
+  children: (pending: boolean) => ReactNode;
+  className?: string;
+  resetOnSuccess?: boolean;
+  successMessage: string;
+  onSuccess?: (result: ActionResult) => void;
+};
+
+function ActionForm({
+  action,
+  children,
+  className = "grid gap-4",
+  resetOnSuccess = false,
+  successMessage,
+  onSuccess,
+}: ActionFormProps) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (pending) {
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    startTransition(async () => {
+      try {
+        const result = await action(formData);
+        toast.success(successMessage);
+        if (resetOnSuccess) {
+          form.reset();
+        }
+        onSuccess?.(result);
+        router.refresh();
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+      }
+    });
+  }
+
+  return (
+    <form className={className} onSubmit={handleSubmit}>
+      <fieldset className="contents" disabled={pending}>
+        {children(pending)}
+      </fieldset>
+    </form>
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return "Не удалось выполнить действие.";
+}
+
+function isCreateHallResult(
+  result: ActionResult,
+): result is { editorPath: string } {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "editorPath" in result &&
+    typeof result.editorPath === "string"
   );
 }
 

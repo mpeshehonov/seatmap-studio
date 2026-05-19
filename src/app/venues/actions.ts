@@ -40,6 +40,16 @@ export async function createVenue(formData: FormData) {
 }
 
 export async function createHallWithDemoMap(formData: FormData) {
+  const result = await createHallWithDemoMapRecord(formData);
+
+  redirect(result.editorPath);
+}
+
+export async function createHallWithDemoMapForClient(formData: FormData) {
+  return createHallWithDemoMapRecord(formData);
+}
+
+async function createHallWithDemoMapRecord(formData: FormData) {
   const { supabase, user } = await requireAuthenticatedUser();
   const submittedVenueId = formData.get("venueId");
   const venueId =
@@ -76,7 +86,8 @@ export async function createHallWithDemoMap(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/venues");
   revalidatePath(`/venues/${venueId}`);
-  redirect(`/halls/${hall.id}/editor`);
+
+  return { editorPath: `/halls/${hall.id}/editor` };
 }
 
 export async function createEventForHall(formData: FormData) {
