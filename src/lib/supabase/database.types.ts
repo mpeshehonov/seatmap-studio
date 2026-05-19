@@ -45,6 +45,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "event_seat_categories_definition_fkey";
+            columns: ["event_id", "category"];
+            isOneToOne: false;
+            referencedRelation: "event_seat_category_definitions";
+            referencedColumns: ["event_id", "key"];
+          },
+          {
             foreignKeyName: "event_seat_categories_event_id_fkey";
             columns: ["event_id"];
             isOneToOne: false;
@@ -56,6 +63,53 @@ export type Database = {
             columns: ["hall_id"];
             isOneToOne: false;
             referencedRelation: "halls";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_seat_category_definitions: {
+        Row: {
+          color_token: string;
+          created_at: string;
+          description: string | null;
+          event_id: string;
+          id: string;
+          key: string;
+          name: string;
+          owner_id: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          color_token?: string;
+          created_at?: string;
+          description?: string | null;
+          event_id: string;
+          id?: string;
+          key: string;
+          name: string;
+          owner_id: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          color_token?: string;
+          created_at?: string;
+          description?: string | null;
+          event_id?: string;
+          id?: string;
+          key?: string;
+          name?: string;
+          owner_id?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_seat_category_definitions_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
             referencedColumns: ["id"];
           },
         ];

@@ -3,10 +3,7 @@
 import { type PointerEvent, useMemo, useState } from "react";
 
 import { RotateLeftIcon, RotateRightIcon } from "@/components/ui/icons";
-import {
-  getEventSeatCategoryLabel,
-  type EventSeatCategory,
-} from "./event-seat-categories";
+import { type EventSeatCategoryKey } from "./event-seat-categories";
 import {
   type SeatMapElement,
   type SeatMapJson,
@@ -17,7 +14,9 @@ import {
 type SeatMapViewerProps = {
   map: SeatMapJson;
   statuses?: Record<string, SeatStatus>;
-  seatCategories?: Record<string, EventSeatCategory>;
+  seatCategories?: Record<string, EventSeatCategoryKey>;
+  seatCategoryStyles?: Record<string, string>;
+  seatCategoryLabels?: Record<string, string>;
   selectedSeatIds?: string[];
   readonly?: boolean;
   selectedElementId?: string | null;
@@ -43,17 +42,12 @@ const statusClasses: Record<SeatStatus, string> = {
   sold: "border-zinc-400 bg-zinc-300 text-zinc-500",
 };
 
-const categoryClasses: Record<EventSeatCategory, string> = {
-  standard: "border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-200",
-  vip: "border-amber-400 bg-amber-200 text-amber-950 hover:bg-amber-300",
-  accessible:
-    "border-emerald-400 bg-emerald-100 text-emerald-950 hover:bg-emerald-200",
-};
-
 export function SeatMapViewer({
   map,
   statuses = {},
   seatCategories = {},
+  seatCategoryStyles = {},
+  seatCategoryLabels = {},
   selectedSeatIds,
   readonly = false,
   selectedElementId = null,
@@ -198,8 +192,13 @@ export function SeatMapViewer({
                               readonly || status === "sold" || status === "held"
                             }
                             onClick={() => toggleSeat(seat.id, status)}
-                            className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${getSeatClassName(status, category)}`}
-                            title={getSeatTitle(element.label, seat.label, category)}
+                            className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] transition ${getSeatClassName(status, category, seatCategoryStyles)}`}
+                            title={getSeatTitle(
+                              element.label,
+                              seat.label,
+                              category,
+                              seatCategoryLabels,
+                            )}
                           >
                             {seat.label}
                           </button>
@@ -231,19 +230,21 @@ export function SeatMapViewer({
 
 function getSeatClassName(
   status: SeatStatus,
-  category: EventSeatCategory | undefined,
+  category: EventSeatCategoryKey | undefined,
+  seatCategoryStyles: Record<string, string>,
 ): string {
   if (status !== "available" || !category) {
     return statusClasses[status];
   }
 
-  return categoryClasses[category];
+  return seatCategoryStyles[category] ?? statusClasses.available;
 }
 
 function getSeatTitle(
   rowLabel: string,
   seatLabel: string,
-  category: EventSeatCategory | undefined,
+  category: EventSeatCategoryKey | undefined,
+  seatCategoryLabels: Record<string, string>,
 ): string {
   const seatTitle = `${rowLabel}${seatLabel}`;
 
@@ -251,7 +252,8 @@ function getSeatTitle(
     return seatTitle;
   }
 
-  return `${seatTitle} · ${getEventSeatCategoryLabel(category)}`;
+  const categoryLabel = seatCategoryLabels[category] ?? category;
+  return `${seatTitle} · ${categoryLabel}`;
 }
 
 function Shape({

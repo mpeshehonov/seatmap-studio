@@ -57,16 +57,38 @@ create table public.seat_statuses (
   unique nulls not distinct (event_id, hall_id, seat_id)
 );
 
+create table public.event_seat_category_definitions (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.events(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  key text not null,
+  name text not null,
+  description text,
+  color_token text not null default 'sky',
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (event_id, key),
+  constraint event_seat_category_definitions_key_format
+    check (key ~ '^[a-z0-9][a-z0-9_-]{0,63}$'),
+  constraint event_seat_category_definitions_name_len
+    check (char_length(name) between 1 and 80)
+);
+
 create table public.event_seat_categories (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
   hall_id uuid not null references public.halls(id) on delete cascade,
   owner_id uuid not null references auth.users(id) on delete cascade,
   seat_id text not null,
-  category text not null check (category in ('standard', 'vip', 'accessible')),
+  category text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (event_id, seat_id)
+  unique (event_id, seat_id),
+  foreign key (event_id, category)
+    references public.event_seat_category_definitions (event_id, key)
+    on update cascade
+    on delete restrict
 );
 
 create index venues_owner_id_idx on public.venues(owner_id);
@@ -78,6 +100,10 @@ create index events_owner_id_idx on public.events(owner_id);
 create index seat_statuses_hall_id_idx on public.seat_statuses(hall_id);
 create index seat_statuses_event_id_idx on public.seat_statuses(event_id);
 create index seat_statuses_owner_id_idx on public.seat_statuses(owner_id);
+create index event_seat_category_definitions_event_id_idx
+  on public.event_seat_category_definitions(event_id);
+create index event_seat_category_definitions_owner_id_idx
+  on public.event_seat_category_definitions(owner_id);
 create index event_seat_categories_event_id_idx on public.event_seat_categories(event_id);
 create index event_seat_categories_hall_id_idx on public.event_seat_categories(hall_id);
 create index event_seat_categories_owner_id_idx on public.event_seat_categories(owner_id);
@@ -113,6 +139,10 @@ create trigger seat_statuses_set_updated_at
 before update on public.seat_statuses
 for each row execute function public.set_updated_at();
 
+create trigger event_seat_category_definitions_set_updated_at
+before update on public.event_seat_category_definitions
+for each row execute function public.set_updated_at();
+
 create trigger event_seat_categories_set_updated_at
 before update on public.event_seat_categories
 for each row execute function public.set_updated_at();
@@ -143,6 +173,7 @@ alter table public.halls enable row level security;
 alter table public.seat_maps enable row level security;
 alter table public.events enable row level security;
 alter table public.seat_statuses enable row level security;
+alter table public.event_seat_category_definitions enable row level security;
 alter table public.event_seat_categories enable row level security;
 
 create policy "Users can read own profile"
@@ -345,6 +376,31 @@ with check (
 
 create policy "Users can delete own seat statuses"
 on public.seat_statuses for delete to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "Users can read own event seat category definitions"
+on public.event_seat_category_definitions for select to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "Users can create own event seat category definitions"
+on public.event_seat_category_definitions for insert to authenticated
+with check (
+  owner_id = (select auth.uid())
+  and exists (
+    select 1
+    from public.events
+    where events.id = event_seat_category_definitions.event_id
+      and events.owner_id = (select auth.uid())
+  )
+);
+
+create policy "Users can update own event seat category definitions"
+on public.event_seat_category_definitions for update to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "Users can delete own event seat category definitions"
+on public.event_seat_category_definitions for delete to authenticated
 using (owner_id = (select auth.uid()));
 
 create policy "Users can read own event seat categories"

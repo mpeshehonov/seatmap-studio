@@ -6,6 +6,7 @@ import {
   type EventSeatCategoryAssignment,
   toEventSeatCategoryMap,
 } from "@/lib/seatmap/event-seat-categories";
+import { ensureEventSeatCategoryDefinitions } from "@/lib/seatmap/ensure-event-seat-category-definitions";
 import { type SeatMapJson } from "@/lib/seatmap/seatmap";
 import { requireAuthenticatedUser } from "@/lib/supabase/auth";
 
@@ -37,7 +38,7 @@ type HallWithSeatMap = {
 
 export default async function EventPage({ params }: EventPageProps) {
   const { eventId } = await params;
-  const { supabase } = await requireAuthenticatedUser();
+  const { supabase, user } = await requireAuthenticatedUser();
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select("id,title,starts_at,hall_id")
@@ -60,8 +61,8 @@ export default async function EventPage({ params }: EventPageProps) {
             {event.title}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-600">
-            Это событие сейчас не привязано к схеме. Привяжите его к схеме в
-            списке залов, чтобы настроить категории мест.
+            Событие без схемы зала — категории мест настраиваются после
+            привязки.
           </p>
         </section>
       </main>
@@ -84,6 +85,12 @@ export default async function EventPage({ params }: EventPageProps) {
   if (!map) {
     notFound();
   }
+
+  const categoryDefinitions = await ensureEventSeatCategoryDefinitions(
+    supabase,
+    event.id,
+    user.id,
+  );
 
   const { data: assignments, error: assignmentsError } = await supabase
     .from("event_seat_categories")
@@ -132,6 +139,7 @@ export default async function EventPage({ params }: EventPageProps) {
           eventId={event.id}
           hallId={hall.id}
           map={map}
+          initialDefinitions={categoryDefinitions}
           initialSeatCategories={toEventSeatCategoryMap(assignments)}
         />
       </section>

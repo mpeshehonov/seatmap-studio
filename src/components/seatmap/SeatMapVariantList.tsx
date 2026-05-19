@@ -50,16 +50,13 @@ export function SeatMapVariantList({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-zinc-950">Схемы залов</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Создание вынесено в отдельный шаг, чтобы не мешать просмотру списка.
-          </p>
         </div>
         <CreateVariantDialog />
       </div>
 
       {variants.length === 0 ? (
         <p className="rounded-3xl bg-zinc-50 p-6 text-sm text-zinc-600">
-          Вариантов схем пока нет. Создайте первую схему через кнопку выше.
+          Пока нет ни одной схемы зала.
         </p>
       ) : null}
 
@@ -193,8 +190,7 @@ export function SeatMapVariantList({
             События без схемы
           </h2>
           <p className="mt-1 text-sm text-zinc-600">
-            Это черновики событий, которые можно удалить или привязать к другой
-            схеме.
+            События без привязанной схемы зала.
           </p>
           <ul className="mt-4 flex flex-col gap-2">
             {unassignedEvents.map((event) => (
@@ -229,7 +225,7 @@ function CreateVariantDialog() {
   return (
     <Dialog
       title="Новая схема зала"
-      description="Создайте вариант рассадки. После создания откроется редактор схемы."
+      description="Ряды, места и сцена для конкретного варианта зала."
       trigger={
         <button className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white">
           <AddIcon />
@@ -277,7 +273,7 @@ function CreateEventDialog({ hallId }: { hallId: string }) {
   return (
     <Dialog
       title="Новое событие"
-      description="Событие сразу привяжется к выбранной схеме. Дату можно оставить пустой и заполнить позже."
+      description="Мероприятие на этой схеме: название и дата проведения."
       trigger={
         <button className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-rose-600 underline-offset-4 hover:underline">
           <AddIcon />
