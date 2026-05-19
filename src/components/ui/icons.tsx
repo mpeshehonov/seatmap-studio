@@ -9,5 +9,7 @@ export {
   RotateCw as RotateRightIcon,
   Save as SaveIcon,
   Trash2 as TrashIcon,
+  Unlink as UnlinkIcon,
+  Link as LinkIcon,
   PanelTop as WidgetIcon,
 } from "lucide-react";

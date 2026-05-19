@@ -38,7 +38,7 @@ create table public.seat_maps (
 
 create table public.events (
   id uuid primary key default gen_random_uuid(),
-  hall_id uuid not null references public.halls(id) on delete cascade,
+  hall_id uuid references public.halls(id) on delete set null,
   owner_id uuid not null references auth.users(id) on delete cascade,
   title text not null,
   starts_at timestamptz,
@@ -244,11 +244,14 @@ on public.events for all to authenticated
 using (owner_id = (select auth.uid()))
 with check (
   owner_id = (select auth.uid())
-  and exists (
-    select 1
-    from public.halls
-    where halls.id = events.hall_id
-      and halls.owner_id = (select auth.uid())
+  and (
+    hall_id is null
+    or exists (
+      select 1
+      from public.halls
+      where halls.id = events.hall_id
+        and halls.owner_id = (select auth.uid())
+    )
   )
 );
 

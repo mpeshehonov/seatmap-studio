@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDemoSeatMap } from "./seatmap";
-import { toSeatMapListItems } from "./list-items";
+import { toSeatMapListItems, toUnassignedEvents } from "./list-items";
 
 describe("seat map list items", () => {
   it("flattens halls with events and one-to-one seat map payloads", () => {
@@ -66,5 +66,31 @@ describe("seat map list items", () => {
 
     expect(items[0]?.map?.viewport.width).toBe(760);
     expect(items[0]?.events).toEqual([]);
+  });
+
+  it("sorts unassigned events by date and title", () => {
+    const events = toUnassignedEvents([
+      {
+        id: "no-date-b",
+        title: "Событие без даты B",
+        starts_at: null,
+      },
+      {
+        id: "dated",
+        title: "Событие с датой",
+        starts_at: "2026-06-01T19:00:00.000Z",
+      },
+      {
+        id: "no-date-a",
+        title: "Событие без даты A",
+        starts_at: null,
+      },
+    ]);
+
+    expect(events.map((event) => event.id)).toEqual([
+      "dated",
+      "no-date-a",
+      "no-date-b",
+    ]);
   });
 });

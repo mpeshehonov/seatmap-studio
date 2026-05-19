@@ -15,7 +15,7 @@ export type Database = {
       events: {
         Row: {
           created_at: string;
-          hall_id: string;
+          hall_id: string | null;
           id: string;
           owner_id: string;
           starts_at: string | null;
@@ -24,7 +24,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
-          hall_id: string;
+          hall_id?: string | null;
           id?: string;
           owner_id: string;
           starts_at?: string | null;
@@ -33,7 +33,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
-          hall_id?: string;
+          hall_id?: string | null;
           id?: string;
           owner_id?: string;
           starts_at?: string | null;

@@ -101,6 +101,64 @@ export async function createEventForHall(formData: FormData) {
   revalidatePath(`/halls/${hallId}/editor`);
 }
 
+export async function deleteEvent(formData: FormData) {
+  const { supabase } = await requireAuthenticatedUser();
+  const eventId = getRequiredString(formData, "eventId");
+
+  const { error } = await supabase.from("events").delete().eq("id", eventId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/venues");
+}
+
+export async function detachEventFromHall(formData: FormData) {
+  const { supabase } = await requireAuthenticatedUser();
+  const eventId = getRequiredString(formData, "eventId");
+  const hallId = formData.get("hallId");
+
+  const { error } = await supabase
+    .from("events")
+    .update({ hall_id: null })
+    .eq("id", eventId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/venues");
+  if (typeof hallId === "string" && hallId.length > 0) {
+    revalidatePath(`/halls/${hallId}/editor`);
+  }
+}
+
+export async function moveEventToHall(formData: FormData) {
+  const { supabase } = await requireAuthenticatedUser();
+  const eventId = getRequiredString(formData, "eventId");
+  const hallId = getRequiredString(formData, "hallId");
+  const sourceHallId = formData.get("sourceHallId");
+
+  const { error } = await supabase
+    .from("events")
+    .update({ hall_id: hallId })
+    .eq("id", eventId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/venues");
+  if (typeof sourceHallId === "string" && sourceHallId.length > 0) {
+    revalidatePath(`/halls/${sourceHallId}/editor`);
+  }
+  revalidatePath(`/halls/${hallId}/editor`);
+}
+
 function parseOptionalDateTime(value: FormDataEntryValue | null): string | null {
   if (typeof value !== "string" || value.trim().length === 0) {
     return null;

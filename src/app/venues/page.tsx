@@ -1,12 +1,10 @@
 import Link from "next/link";
 
-import {
-  createHallWithDemoMap,
-} from "@/app/venues/actions";
 import { SeatMapVariantList } from "@/components/seatmap/SeatMapVariantList";
-import { AddIcon } from "@/components/ui/icons";
 import {
   toSeatMapListItems,
+  toUnassignedEvents,
+  type SeatMapListEvent,
   type SeatMapListVenue,
 } from "@/lib/seatmap/list-items";
 import { requireAuthenticatedUser } from "@/lib/supabase/auth";
@@ -20,7 +18,14 @@ export default async function VenuesPage() {
     .select("id,name,halls(id,name,is_published,events(id,title,starts_at),seat_maps(map_json))")
     .order("created_at", { ascending: false })
     .returns<VenueWithHalls[]>();
+  const { data: detachedEvents, error: detachedEventsError } = await supabase
+    .from("events")
+    .select("id,title,starts_at")
+    .is("hall_id", null)
+    .order("created_at", { ascending: false })
+    .returns<SeatMapListEvent[]>();
   const variants = toSeatMapListItems(venues);
+  const unassignedEvents = toUnassignedEvents(detachedEvents);
 
   return (
     <main className="min-h-screen bg-zinc-100 px-6 py-8">
@@ -45,38 +50,23 @@ export default async function VenuesPage() {
             </div>
           </div>
 
-          <form
-            action={createHallWithDemoMap}
-            className="mt-8 rounded-3xl bg-zinc-50 p-5"
-          >
-            <h2 className="text-lg font-bold text-zinc-950">
-              Новый вариант схемы
-            </h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
-              <input
-                required
-                className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none focus:border-rose-500"
-                name="name"
-                placeholder="Например, Основная рассадка"
-              />
-              <button
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white"
-                type="submit"
-              >
-                <AddIcon />
-                Создать
-              </button>
-            </div>
-          </form>
-
           {error ? (
             <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
               Не удалось загрузить варианты схем: {error.message}
             </div>
           ) : null}
+          {detachedEventsError ? (
+            <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
+              Не удалось загрузить отвязанные события:{" "}
+              {detachedEventsError.message}
+            </div>
+          ) : null}
 
           <div className="mt-8">
-            <SeatMapVariantList variants={variants} />
+            <SeatMapVariantList
+              variants={variants}
+              unassignedEvents={unassignedEvents}
+            />
           </div>
         </div>
       </section>

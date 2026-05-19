@@ -1,8 +1,8 @@
-import { createHallWithDemoMap } from "@/app/venues/actions";
 import { SeatMapVariantList } from "@/components/seatmap/SeatMapVariantList";
-import { AddIcon } from "@/components/ui/icons";
 import {
   toSeatMapListItems,
+  toUnassignedEvents,
+  type SeatMapListEvent,
   type SeatMapListVenue,
 } from "@/lib/seatmap/list-items";
 import { requireAuthenticatedUser } from "@/lib/supabase/auth";
@@ -16,7 +16,14 @@ export default async function DashboardPage() {
     .select("id,name,halls(id,name,is_published,events(id,title,starts_at),seat_maps(map_json))")
     .order("created_at", { ascending: false })
     .returns<VenueSummary[]>();
+  const { data: detachedEvents, error: detachedEventsError } = await supabase
+    .from("events")
+    .select("id,title,starts_at")
+    .is("hall_id", null)
+    .order("created_at", { ascending: false })
+    .returns<SeatMapListEvent[]>();
   const variants = toSeatMapListItems(venues);
+  const unassignedEvents = toUnassignedEvents(detachedEvents);
 
   return (
     <main className="min-h-screen bg-zinc-100 px-6 py-8">
@@ -33,21 +40,6 @@ export default async function DashboardPage() {
               Аккаунт: {user.email ?? user.id}
             </p>
           </div>
-          <form action={createHallWithDemoMap} className="flex flex-wrap gap-2">
-            <input
-              required
-              className="rounded-full border border-zinc-200 bg-white px-5 py-3 text-sm outline-none focus:border-rose-500"
-              name="name"
-              placeholder="Название варианта"
-            />
-            <button
-              className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white"
-              type="submit"
-            >
-              <AddIcon />
-              Создать схему
-            </button>
-          </form>
         </header>
 
         {error ? (
@@ -56,7 +48,16 @@ export default async function DashboardPage() {
           </div>
         ) : null}
 
-        <SeatMapVariantList variants={variants} />
+        {detachedEventsError ? (
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-900">
+            Не удалось загрузить отвязанные события: {detachedEventsError.message}
+          </div>
+        ) : null}
+
+        <SeatMapVariantList
+          variants={variants}
+          unassignedEvents={unassignedEvents}
+        />
       </section>
     </main>
   );

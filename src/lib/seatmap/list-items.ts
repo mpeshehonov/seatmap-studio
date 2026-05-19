@@ -45,6 +45,12 @@ export function toSeatMapListItems(
   );
 }
 
+export function toUnassignedEvents(
+  events: SeatMapListEvent[] | null | undefined,
+): SeatMapListEvent[] {
+  return [...(events ?? [])].sort(compareEventsByDate);
+}
+
 function extractSeatMap(
   payload: SeatMapListHall["seat_maps"],
 ): SeatMapJson | null {
